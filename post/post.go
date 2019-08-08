@@ -83,6 +83,7 @@ type Actions struct {
 type Notifications struct {
 	gorm.Model
 
+	Read       int64 `gorm:"default:1"`
 	Userid     int64
 	Postuserid int64
 	Postid     int64
@@ -317,21 +318,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 
 		if cat.Category == "Feed" {
 			db.Find(&post)
-		} else if cat.Category == "Photography" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Science" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Literature" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Health" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Cooking" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Music" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Sports" {
-			db.Where("Category = ?", cat.Category).Find(&post)
-		} else if cat.Category == "Movies" {
+		} else {
 			db.Where("Category = ?", cat.Category).Find(&post)
 		}
 	}
@@ -644,7 +631,7 @@ func Setnotification(w http.ResponseWriter, r *http.Request) {
 	err := vars.Decode(&input)
 
 	if err == nil {
-		db.Create(&Notifications{Userid: input.Userid, Image: input.Image, Postuserid: input.Postuserid, Postid: input.Postid, Message: input.Message, Name: input.Name})
+		db.Create(&Notifications{Userid: input.Userid, Image: input.Image, Postuserid: input.Postuserid, Postid: input.Postid, Message: input.Message, Name: input.Name, Read: 1})
 		fmt.Println("Notification done")
 	}
 
@@ -735,6 +722,79 @@ func Getnotification(w http.ResponseWriter, r *http.Request) {
 	var notification []Notifications
 
 	if err == nil {
+		db.Where("Postuserid = ?", input.Postuserid).Find(&notification)
+	}
+
+	json.NewEncoder(w).Encode(notification)
+
+	defer db.Close()
+}
+
+func Deletepost(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=quora password=helloworld sslmode=disable")
+	if err != nil {
+		fmt.Println("Failed to connect 9")
+	} else {
+		fmt.Println("Connection Successfull")
+	}
+
+	var input Post
+	vars := json.NewDecoder(r.Body)
+	err := vars.Decode(&input)
+
+	if err == nil {
+		db.Where("ID = ?", input.ID).Unscoped().Delete(Post{})
+		db.Where("Postid = ?", input.ID).Unscoped().Delete(Actions{})
+	}
+
+	defer db.Close()
+}
+
+func Deletequestion(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hi")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=quora password=helloworld sslmode=disable")
+	if err != nil {
+		fmt.Println("Failed to connect 9")
+	} else {
+		fmt.Println("Connection Successfull")
+	}
+
+	var input Question
+	vars := json.NewDecoder(r.Body)
+	err := vars.Decode(&input)
+
+	if err == nil {
+		db.Where("ID = ?", input.ID).Unscoped().Delete(Question{})
+		db.Where("Questionid = ?", input.ID).Unscoped().Delete(Answer{})
+	}
+
+	defer db.Close()
+}
+
+func Notificaionread(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	db, err = gorm.Open("postgres", "port=5432 user=postgres dbname=quora password=helloworld sslmode=disable")
+	if err != nil {
+		fmt.Println("Failed to connect 9")
+	} else {
+		fmt.Println("Connection Successfull")
+	}
+
+	var input Notifications
+	vars := json.NewDecoder(r.Body)
+	err := vars.Decode(&input)
+	var notification []Notifications
+
+	if err == nil {
+		db.Table("notifications").Where("Postuserid = ?", input.Postuserid).Updates(map[string]interface{}{"read": 0})
 		db.Where("Postuserid = ?", input.Postuserid).Find(&notification)
 	}
 

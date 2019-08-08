@@ -84,6 +84,7 @@ type Notifications struct {
 	gorm.Model
 
 	Userid     int64
+	Read       int64 `gorm:"default:1"`
 	Postuserid int64
 	Postid     int64
 	Image      string
@@ -147,6 +148,9 @@ func handlerequests() {
 	myRouter.HandleFunc("/verifypass", candidates.Verifypass).Methods("POST")
 	myRouter.HandleFunc("/setpass", candidates.Setpass).Methods("POST")
 	myRouter.HandleFunc("/getprofiledetails", candidates.Getprofiledetails).Methods("POST")
+	myRouter.HandleFunc("/deletepost", post.Deletepost).Methods("POST")
+	myRouter.HandleFunc("/deletequestion", post.Deletequestion).Methods("POST")
+	myRouter.HandleFunc("/notificaionread", post.Notificaionread).Methods("POST")
 
 	myRouter.PathPrefix("/temp-images/").Handler(http.StripPrefix("/temp-images/", http.FileServer(http.Dir("temp-images"))))
 
